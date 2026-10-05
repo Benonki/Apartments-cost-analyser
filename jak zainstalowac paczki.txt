@@ -1,0 +1,2 @@
+pip freeze > requirements.txt <- przenosi używane paczki do pliku
+pip install -r requirements.txt <- instaluje paczki
