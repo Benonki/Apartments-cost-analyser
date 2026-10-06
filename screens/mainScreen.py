@@ -211,7 +211,3 @@ class ApartmentsApp(tk.Tk):
             self.connection.close()
         super().destroy()
 
-
-if __name__ == "__main__":
-    app = ApartmentsApp()
-    app.mainloop()
