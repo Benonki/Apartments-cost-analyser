@@ -2,8 +2,6 @@ import tkinter as tk
 
 
 class TreeviewHeaderTooltip:
-    """Wyświetla krótki opis po najechaniu na nagłówek Treeview."""
-
     def __init__(self, treeview, columns, descriptions, delay_ms=350):
         self.treeview = treeview
         self.columns = list(columns)

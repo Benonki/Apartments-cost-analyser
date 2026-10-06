@@ -26,16 +26,6 @@ class StatisticsTab(ttk.Frame):
         self.load_distribution_measures()
 
     def create_widgets(self):
-        description = ttk.Label(
-            self,
-            text=(
-                "Podstawowe miary rozkładu dla wielkości liczbowych: "
-                "tendencja centralna, zróżnicowanie, asymetria i koncentracja."
-            ),
-            font=("Segoe UI", 10)
-        )
-        description.pack(anchor="w", padx=10, pady=(10, 5))
-
         statistics_frame = ttk.Frame(self)
         statistics_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
