@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from statisticsTab import StatisticsTab
 from tableTab import TableTab
+from correlationTab import CorrelationTab
 
 
 DB_FILE = Path(__file__).resolve().parent.parent / "apartments.db"
@@ -46,9 +47,17 @@ class ApartmentsApp(tk.Tk):
             connection=self.connection,
             table_name=TABLE_NAME
         )
+        self.correlation_tab = CorrelationTab(
+            notebook,
+            connection=self.connection,
+            table_name=TABLE_NAME
+        )
 
         notebook.add(self.table_tab, text="Tabela")
         notebook.add(self.statistics_tab, text="Miary rozkładu")
+        notebook.add(self.table_tab, text="Tabela")
+        notebook.add(self.statistics_tab, text="Miary rozkładu")
+        notebook.add(self.correlation_tab, text="Korelacje")
 
     def open_database(self):
         if not DB_FILE.exists():
