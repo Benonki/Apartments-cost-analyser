@@ -61,11 +61,6 @@ class ApartmentsApp(tk.Tk):
 
         notebook.add(self.table_tab, text="Tabela")
         notebook.add(self.statistics_tab, text="Miary rozkładu")
-        notebook.add(self.table_tab, text="Tabela")
-        notebook.add(self.statistics_tab, text="Miary rozkładu")
-        notebook.add(self.correlation_tab, text="Korelacje")
-        notebook.add(self.table_tab, text="Tabela")
-        notebook.add(self.statistics_tab, text="Miary rozkładu")
         notebook.add(self.correlation_tab, text="Korelacje")
         notebook.add(self.charts_tab, text="Wykresy")
 

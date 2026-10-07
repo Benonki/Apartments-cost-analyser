@@ -23,26 +23,37 @@ class ChartsTab(ttk.Frame):
         self.load_charts()
 
     def create_widgets(self):
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
         self.figure = Figure(figsize=(12, 6), dpi=100)
 
         self.canvas = FigureCanvasTkAgg(
             self.figure,
             master=self
         )
-        self.canvas.get_tk_widget().pack(
-            fill="both",
-            expand=True,
+
+        self.canvas.get_tk_widget().grid(
+            row=0,
+            column=0,
+            sticky="nsew",
             padx=10,
             pady=(10, 0)
         )
 
-        toolbar = NavigationToolbar2Tk(
+        self.toolbar = NavigationToolbar2Tk(
             self.canvas,
             self,
             pack_toolbar=False
         )
-        toolbar.update()
-        toolbar.pack(fill="x", padx=10, pady=(0, 10))
+        self.toolbar.update()
+        self.toolbar.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            padx=10,
+            pady=(0, 10)
+        )
 
     def load_charts(self):
         query = f"""
