@@ -1,4 +1,5 @@
 import math
+import tkinter as tk
 from tkinter import ttk, messagebox
 
 import pandas as pd
@@ -26,34 +27,53 @@ class ChartsTab(ttk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
-        self.figure = Figure(figsize=(12, 6), dpi=100)
+        self.scroll_area = tk.Canvas(self, highlightthickness=0)
+        self.scroll_area.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=(10, 0))
 
-        self.canvas = FigureCanvasTkAgg(
-            self.figure,
-            master=self
+        vertical_scrollbar = ttk.Scrollbar(
+            self, orient="vertical", command=self.scroll_area.yview
+        )
+        vertical_scrollbar.grid(row=0, column=1, sticky="ns", pady=(10, 0))
+        horizontal_scrollbar = ttk.Scrollbar(
+            self, orient="horizontal", command=self.scroll_area.xview
+        )
+        horizontal_scrollbar.grid(row=1, column=0, sticky="ew", padx=(10, 0))
+        self.scroll_area.configure(
+            yscrollcommand=vertical_scrollbar.set,
+            xscrollcommand=horizontal_scrollbar.set,
         )
 
-        self.canvas.get_tk_widget().grid(
-            row=0,
-            column=0,
-            sticky="nsew",
-            padx=10,
-            pady=(10, 0)
-        )
+        self.figure = Figure(figsize=(13.5, 12), dpi=100)
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.scroll_area)
+        self.plot_widget = self.canvas.get_tk_widget()
+        self.scroll_area.create_window((0, 0), window=self.plot_widget, anchor="nw")
+        self.plot_widget.bind("<Configure>", self._update_scroll_region)
+        self.scroll_area.bind("<Configure>", self._update_scroll_region)
 
-        self.toolbar = NavigationToolbar2Tk(
-            self.canvas,
-            self,
-            pack_toolbar=False
-        )
+        for target in (self.scroll_area, self.plot_widget):
+            target.bind("<MouseWheel>", self._on_mousewheel)
+            target.bind("<Shift-MouseWheel>", self._on_shift_mousewheel)
+            target.bind("<Button-4>", lambda event: self.scroll_area.yview_scroll(-1, "units"))
+            target.bind("<Button-5>", lambda event: self.scroll_area.yview_scroll(1, "units"))
+
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self, pack_toolbar=False)
         self.toolbar.update()
-        self.toolbar.grid(
-            row=1,
-            column=0,
-            sticky="ew",
-            padx=10,
-            pady=(0, 10)
-        )
+        self.toolbar.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(4, 10))
+
+    def _update_scroll_region(self, _event=None):
+        self.scroll_area.configure(scrollregion=self.scroll_area.bbox("all"))
+
+    def _on_mousewheel(self, event):
+        if event.delta:
+            steps = -1 if event.delta > 0 else 1
+            self.scroll_area.yview_scroll(steps * max(1, abs(event.delta) // 120), "units")
+            return "break"
+
+    def _on_shift_mousewheel(self, event):
+        if event.delta:
+            steps = -1 if event.delta > 0 else 1
+            self.scroll_area.xview_scroll(steps * max(1, abs(event.delta) // 120), "units")
+            return "break"
 
     def load_charts(self):
         query = f"""
@@ -93,15 +113,20 @@ class ChartsTab(ttk.Frame):
     def draw_charts(self, data):
         self.figure.clear()
 
-        axes = self.figure.subplots(2, 2)
+        axes = self.figure.subplots(3, 2)
 
         self.draw_price_histogram(axes[0, 0], data)
-        self.draw_city_prices(axes[0, 1], data)
-        self.draw_area_price_scatter(axes[1, 0], data)
-        self.draw_rooms_pictogram(axes[1, 1], data)
+        self.draw_area_price_scatter(axes[0, 1], data)
 
-        self.figure.tight_layout(pad=2)
+        self.draw_city_prices(axes[1, 0], data)
+        self.draw_price_per_square_meter(axes[1, 1], data)
+
+        self.draw_rooms_pictogram(axes[2, 0], data)
+        self.draw_rooms_pie(axes[2, 1], data)
+
+        self.figure.tight_layout(pad=3, h_pad=4, w_pad=3)
         self.canvas.draw()
+        self._update_scroll_region()
 
     @staticmethod
     def draw_price_histogram(axis, data):
@@ -223,3 +248,60 @@ class ChartsTab(ttk.Frame):
 
         for border in axis.spines.values():
             border.set_visible(False)
+    @staticmethod
+    def draw_rooms_pie(axis, data):
+        rooms = pd.to_numeric(data["rooms"], errors="coerce").dropna()
+        rooms = rooms[(rooms > 0) & (rooms % 1 == 0)]
+        counts = rooms.astype(int).value_counts().sort_index()
+
+        axis.set_title("Podział mieszkań według liczby pokoi")
+        if counts.empty:
+            axis.text(0.5, 0.5, "Brak danych", ha="center", va="center", transform=axis.transAxes)
+            return
+
+        total = counts.sum()
+        labels = [
+            f"{int(rooms)} pok. — {count:,}".replace(",", " ")
+            + f" mieszkań ({count / total * 100:.1f}%)"
+            for rooms, count in counts.items()
+        ]
+        axis.pie(
+            counts.values,
+            labels=None,
+            autopct=lambda percent: f"{percent:.1f}%" if percent >= 3 else "",
+            startangle=90,
+            pctdistance=0.73,
+            wedgeprops={"edgecolor": "white", "linewidth": 1},
+        )
+        axis.legend(labels, loc="center left", bbox_to_anchor=(0.98, 0.5), fontsize=8)
+        axis.set_aspect("equal")
+
+    @staticmethod
+    def draw_price_per_square_meter(axis, data):
+        values = data[["city", "area_m2", "price_pln"]].dropna().copy()
+        values["city"] = values["city"].astype(str).str.strip()
+        values = values[
+            (values["city"] != "") &
+            (values["area_m2"] > 0) &
+            (values["price_pln"] > 0)
+        ]
+        values["price_m2"] = values["price_pln"] / values["area_m2"]
+        mean_prices = values.groupby("city")["price_m2"].mean()
+        city_order = (
+            data.dropna(subset=["city", "price_pln"])
+            .groupby("city")["price_pln"]
+            .mean()
+            .sort_values()
+            .index
+        )
+        mean_prices = mean_prices.reindex(city_order).dropna()
+
+        axis.set_title("Średnia cena za m² według miasta")
+        axis.set_xlabel("Średnia cena [zł/m²]")
+        if mean_prices.empty:
+            axis.text(0.5, 0.5, "Brak danych", ha="center", va="center", transform=axis.transAxes)
+            return
+
+        axis.barh(mean_prices.index.str.title(), mean_prices.values, color="#76B7B2")
+        axis.grid(axis="x", alpha=0.25)
+        axis.set_axisbelow(True)
