@@ -24,6 +24,10 @@ A Python-based application for analyzing and visualizing apartment prices in Pol
    ```bash
    pip install -r requirements.txt
    ```
+   - If you update the project, refresh `requirements.txt`:
+     ```bash
+     pip freeze > requirements.txt
+      ```
 
 ## 🚀 Running the App
 
@@ -35,3 +39,9 @@ A Python-based application for analyzing and visualizing apartment prices in Pol
    ```bash
    python main.py
    ```
+   
+## 🖼️ Showcase
+
+<div align="center">
+  <img src="https://github.com/Benonki/Portfolio/blob/main/StronaGlowna/sc/apartments.png" alt="Preview of My Project">
+</div>
