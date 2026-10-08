@@ -59,6 +59,7 @@ class ChartsTab(ttk.Frame):
         self.toolbar = NavigationToolbar2Tk(self.canvas, self, pack_toolbar=False)
         self.toolbar.update()
         self.toolbar.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(4, 10))
+        self.toolbar.set_message = lambda message: None
 
     def _update_scroll_region(self, _event=None):
         self.scroll_area.configure(scrollregion=self.scroll_area.bbox("all"))
