@@ -10,15 +10,18 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.figure import Figure
 from matplotlib.path import Path
 
+from filtersTab import ApartmentFilters
+
 
 class ChartsTab(ttk.Frame):
     APARTMENTS_PER_ICON = 500
 
-    def __init__(self, parent, connection, table_name):
+    def __init__(self, parent, connection, table_name, filters=None):
         super().__init__(parent)
 
         self.connection = connection
         self.table_name = table_name
+        self.filters = filters if filters is not None else ApartmentFilters()
 
         self.create_widgets()
         self.load_charts()
@@ -77,6 +80,7 @@ class ChartsTab(ttk.Frame):
             return "break"
 
     def load_charts(self):
+        sql_filter, params = self.filters.as_sql()
         query = f"""
             SELECT
                 city,
@@ -85,10 +89,11 @@ class ChartsTab(ttk.Frame):
                 centre_distance_km,
                 price_pln
             FROM {self.table_name}
+            WHERE 1=1{sql_filter}
         """
 
         try:
-            data = pd.read_sql_query(query, self.connection)
+            data = pd.read_sql_query(query, self.connection, params=params)
 
             numeric_columns = [
                 "area_m2",

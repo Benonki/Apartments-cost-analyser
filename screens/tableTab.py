@@ -1,16 +1,19 @@
 import sqlite3
 from tkinter import ttk, messagebox
 
+from filtersTab import ApartmentFilters
+
 
 ROWS_PER_PAGE = 250
 
 
 class TableTab(ttk.Frame):
-    def __init__(self, parent, connection, table_name):
+    def __init__(self, parent, connection, table_name, filters=None):
         super().__init__(parent)
 
         self.connection = connection
         self.table_name = table_name
+        self.filters = filters if filters is not None else ApartmentFilters()
         self.current_page = 0
         self.total_rows = 0
 
@@ -111,7 +114,11 @@ class TableTab(ttk.Frame):
     def refresh_count(self):
         try:
             cursor = self.connection.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+            sql_filter, params = self.filters.as_sql()
+            cursor.execute(
+                f"SELECT COUNT(*) FROM {self.table_name} WHERE 1=1{sql_filter}",
+                params,
+            )
             self.total_rows = cursor.fetchone()[0]
         except sqlite3.Error as error:
             messagebox.showerror("Błąd bazy danych", str(error))
@@ -124,6 +131,7 @@ class TableTab(ttk.Frame):
         offset = self.current_page * ROWS_PER_PAGE
 
         try:
+            sql_filter, params = self.filters.as_sql()
             cursor = self.connection.cursor()
             cursor.execute(
                 f"""
@@ -136,10 +144,11 @@ class TableTab(ttk.Frame):
                     centre_distance_km,
                     price_pln
                 FROM {self.table_name}
+                WHERE 1=1{sql_filter}
                 ORDER BY id
                 LIMIT ? OFFSET ?
                 """,
-                (ROWS_PER_PAGE, offset),
+                (*params, ROWS_PER_PAGE, offset),
             )
 
             for row in cursor.fetchall():
@@ -166,7 +175,7 @@ class TableTab(ttk.Frame):
             text=f"Strona {self.current_page + 1} z {total_pages}"
         )
         self.count_label.config(
-            text=f"Liczba mieszkań w bazie: {self.total_rows}"
+            text=f"Liczba mieszkań po filtrowaniu: {self.total_rows}"
         )
 
         self.prev_button.config(

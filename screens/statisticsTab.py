@@ -5,6 +5,7 @@ from statistics import mean, median
 from tkinter import ttk, messagebox
 
 from headerTooltip import TreeviewHeaderTooltip
+from filtersTab import ApartmentFilters
 
 
 class StatisticsTab(ttk.Frame):
@@ -16,11 +17,12 @@ class StatisticsTab(ttk.Frame):
         "price_pln": "Cena [zł]",
     }
 
-    def __init__(self, parent, connection, table_name):
+    def __init__(self, parent, connection, table_name, filters=None):
         super().__init__(parent)
 
         self.connection = connection
         self.table_name = table_name
+        self.filters = filters if filters is not None else ApartmentFilters()
 
         self.create_widgets()
         self.load_distribution_measures()
@@ -176,10 +178,12 @@ class StatisticsTab(ttk.Frame):
         cursor = self.connection.cursor()
 
         try:
+            sql_filter, params = self.filters.as_sql()
             for column_name, display_name in self.VARIABLES.items():
                 cursor.execute(
                     f"SELECT {column_name} FROM {self.table_name} "
-                    f"WHERE {column_name} IS NOT NULL"
+                    f"WHERE {column_name} IS NOT NULL{sql_filter}",
+                    params,
                 )
                 values = [float(row[0]) for row in cursor.fetchall()]
 

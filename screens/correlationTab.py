@@ -2,6 +2,8 @@ from tkinter import ttk, messagebox
 
 import pandas as pd
 
+from filtersTab import ApartmentFilters
+
 
 class CorrelationTab(ttk.Frame):
     VARIABLES = {
@@ -12,11 +14,12 @@ class CorrelationTab(ttk.Frame):
         "price_pln": "Cena [zł]",
     }
 
-    def __init__(self, parent, connection, table_name):
+    def __init__(self, parent, connection, table_name, filters=None):
         super().__init__(parent)
 
         self.connection = connection
         self.table_name = table_name
+        self.filters = filters if filters is not None else ApartmentFilters()
 
         self.create_widgets()
         self.load_correlations()
@@ -93,13 +96,14 @@ class CorrelationTab(ttk.Frame):
 
         column_names = list(self.VARIABLES)
 
+        sql_filter, params = self.filters.as_sql()
         query = (
             f"SELECT {', '.join(column_names)} "
-            f"FROM {self.table_name}"
+            f"FROM {self.table_name} WHERE 1=1{sql_filter}"
         )
 
         try:
-            data = pd.read_sql_query(query, self.connection)
+            data = pd.read_sql_query(query, self.connection, params=params)
 
             for column_name in column_names:
                 data[column_name] = pd.to_numeric(
