@@ -90,11 +90,6 @@ class FiltersTab(ttk.Frame):
         ttk.Label(
             content, textvariable=self.summary_var, font=("Segoe UI", 11, "bold")
         ).grid(row=5, column=0, sticky="w")
-        ttk.Label(
-            content,
-            text="Filtry dotyczą jednocześnie zakładek: Tabela, Miary rozkładu, Korelacje i Wykresy.",
-            wraplength=850,
-        ).grid(row=6, column=0, sticky="w", pady=(7, 0))
 
     def add_range_inputs(self, frame, lower_var, upper_var):
         ttk.Label(frame, text="Od:").grid(row=0, column=0, sticky="w")
